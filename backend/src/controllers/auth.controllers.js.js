@@ -2,31 +2,29 @@ const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
-
-
 // sign token
-const signToken = (id, role) => 
-  jwt.sign({id, role}, process.env.JWT_SECRET || 'dev', {expiresIn:"7d"});
-
+const signToken = (id, role, status) =>
+  jwt.sign({ id, role, status }, process.env.JWT_SECRET || 'dev', { expiresIn: '7d' });
 
 // Register
-exports.register = async (req, res) =>{
+exports.register = async (req, res) => {
   try {
-    const {name, email, password, role} = req.body;
-    
-    if (await User.findOne({email}))
-      return res.status(409).json({message:'Email already exists'});
+    const { name, email, password, role } = req.body;
 
-    const user = await User.create({name, email, password, role});
-    res.status(201).json({token:signToken(user._id, user.role)})
+    if (await User.findOne({ email }))
+      return res.status(409).json({ message: 'Email already exists' });
+
+    const user = await User.create({ name, email, password, role });
+
+    res.status(201).json({
+      token: signToken(user._id, user.role, user.status),
+    });
   } catch (error) {
-    res.status(500).json({message:'Server error', error:error.message})
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
-}
+};
 
-
-// login
-
+// Login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -35,17 +33,16 @@ exports.login = async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password)))
       return res.status(401).json({ message: 'Invalid User or Email' });
 
-    // Generate token with id and role
-    const token = signToken(user._id, user.role);
+    const token = signToken(user._id, user.role, user.status);
 
-    // Respond with both token and user info (including role)
     res.json({
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,  // <-- Include role here
+        role: user.role,
+        status: user.status,
       },
     });
   } catch (error) {
@@ -53,8 +50,7 @@ exports.login = async (req, res) => {
   }
 };
 
-
-// google login
+// Google Login
 exports.googleLogin = async (req, res) => {
   try {
     const { email, name, googleId, avatar } = req.body;
@@ -66,18 +62,20 @@ exports.googleLogin = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      // Create user if not found
+      const randomPassword = await bcrypt.hash(googleId, 10); // safer dummy password
+
       user = await User.create({
         name,
         email,
-        password: googleId, // just a dummy password, not used
+        password: randomPassword,
         googleId,
         avatar,
         role: 'Customer',
+        provider: 'google',
       });
     }
 
-    const token = signToken(user._id, user.role);
+    const token = signToken(user._id, user.role, user.status);
 
     res.json({
       token,
@@ -86,6 +84,7 @@ exports.googleLogin = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        status: user.status,
         avatar: user.avatar,
       },
     });
@@ -95,15 +94,7 @@ exports.googleLogin = async (req, res) => {
   }
 };
 
-
-
-
-
-
-// google register
-
-
-
+// Google Register / OAuth
 exports.googleOAuth = async (req, res) => {
   const { email, name } = req.body;
 
@@ -111,17 +102,18 @@ exports.googleOAuth = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
+      const randomPassword = await bcrypt.hash('google_oauth_user_' + Date.now(), 10);
+
       user = await User.create({
         name,
         email,
-        password: 'google_oauth_user', // placeholder
+        password: randomPassword,
         role: 'Customer',
+        provider: 'google',
       });
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'dev', {
-      expiresIn: '7d',
-    });
+    const token = signToken(user._id, user.role, user.status);
 
     res.json({
       token,
@@ -130,14 +122,10 @@ exports.googleOAuth = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        status: user.status,
       },
     });
   } catch (err) {
     res.status(500).json({ message: 'Google login failed', error: err.message });
   }
 };
-
-
-
-
-
