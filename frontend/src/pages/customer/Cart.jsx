@@ -1,11 +1,11 @@
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useAuth } from "../../context/AuthContext"; // ✅ assuming you have this
+import { useAuth } from "../../context/AuthContext";
 
 export default function Cart() {
-  const { cartItems, removeFromCart, getTotal, updateQuantity } = useCart();
-  const { user } = useAuth(); // ✅ Get the current logged-in user
+  const { cartItems, removeFromCart, getTotal, updateCartItemQuantity } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const handleRemove = async (cartItemId) => {
@@ -20,7 +20,7 @@ export default function Cart() {
 
   const handleQuantityChange = async (cartItemId, action) => {
     try {
-      await updateQuantity(cartItemId, action);
+      await updateCartItemQuantity(cartItemId, action);
       toast.success("Cart updated");
     } catch (error) {
       console.error("Failed to update cart:", error);
@@ -28,7 +28,6 @@ export default function Cart() {
     }
   };
 
-  // Filter out cart items with missing product info
   const validCartItems = cartItems.filter((item) => item.product !== null);
 
   return (
@@ -45,14 +44,11 @@ export default function Cart() {
               className="flex justify-between items-center border-b py-4"
             >
               <div>
-                <h3 className="text-lg font-semibold">
-                  {item.product.name}
-                </h3>
+                <h3 className="text-lg font-semibold">{item.product.name}</h3>
                 <p className="text-sm text-gray-600">
                   ₹{item.product.price} x {item.quantity}
                 </p>
 
-                {/* Quantity controls */}
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => handleQuantityChange(item._id, "decrease")}
@@ -87,7 +83,6 @@ export default function Cart() {
             </div>
           ))}
 
-          {/* Cart Total and Checkout */}
           <div className="flex justify-between items-center mt-6">
             <h3 className="text-xl font-bold">Total: ₹{getTotal()}</h3>
             <button
