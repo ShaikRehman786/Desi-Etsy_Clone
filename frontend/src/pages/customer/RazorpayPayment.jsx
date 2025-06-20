@@ -14,12 +14,8 @@ const RazorpayPayment = () => {
       const script = document.createElement('script');
       script.id = 'razorpay-script';
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => {
-        resolve(true);
-      };
-      script.onerror = () => {
-        resolve(false);
-      };
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
       document.body.appendChild(script);
     });
   };
@@ -40,26 +36,30 @@ const RazorpayPayment = () => {
     }
 
     try {
-      // Create order on backend
-      const { data: order } = await axios.post('/api/payment/create-order', {
-        amount: amount * 100, // amount in paise
-      });
+      // ✅ Create order on backend using Vite env URL
+      const { data: order } = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/payment/create-order`,
+        { amount: amount * 100 }
+      );
 
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID, // Your Razorpay Key ID
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // ✅ Correct key for Vite
         amount: order.amount,
         currency: order.currency,
         order_id: order.id,
         name: 'Your Company Name',
         description: 'Test Transaction',
         handler: async function (response) {
-          // Send payment details to backend for verification
           try {
-            const verifyRes = await axios.post('/api/payment/verify-payment', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
+            // ✅ Use Vite env URL for verification
+            const verifyRes = await axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/payment/verify-payment`,
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }
+            );
 
             if (verifyRes.data.status === 'success') {
               alert('Payment successful!');
@@ -86,6 +86,7 @@ const RazorpayPayment = () => {
       alert('Server error, unable to create order.');
       console.error(error);
     }
+
     setLoading(false);
   };
 
