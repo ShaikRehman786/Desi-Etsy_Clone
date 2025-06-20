@@ -4,11 +4,12 @@ import React from 'react';
 export default function RazorpayButton({ amount }) {
   const handlePayment = async () => {
     // 1. Create Order
-    const res = await fetch('/api/payment/create-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: amount * 100 }) // Convert to paise
-    });
+const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payment/create-order`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ amount: amount * 100 })
+});
+
 
     const order = await res.json();
 
