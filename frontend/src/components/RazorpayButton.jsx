@@ -22,11 +22,12 @@ const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payment/create-
       description: 'Purchase Order',
       order_id: order.id,
       handler: async function (response) {
-        const verifyRes = await fetch('/api/payment/verify-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(response)
-        });
+const verifyRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/payment/verify-payment`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(response)
+});
+
 
         const verifyData = await verifyRes.json();
 
