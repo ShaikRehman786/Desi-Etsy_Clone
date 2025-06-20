@@ -21,14 +21,17 @@ export default function Checkout() {
 
   const handlePaymentSuccess = async (response) => {
     try {
-      const res = await fetch("http://localhost:5000/api/payment/verify-payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user?.token}`, // ✅ add auth header
-        },
-        body: JSON.stringify(response),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/payment/verify-payment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user?.token}`,
+          },
+          body: JSON.stringify(response),
+        }
+      );
 
       const data = await res.json();
 
@@ -62,14 +65,17 @@ export default function Checkout() {
     }
 
     try {
-      const orderRes = await fetch("http://localhost:5000/api/payment/create-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user?.token}`, // ✅ add auth header
-        },
-        body: JSON.stringify({ amount: getTotal() * 100 }),
-      });
+      const orderRes = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/payment/create-order`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user?.token}`,
+          },
+          body: JSON.stringify({ amount: getTotal() * 100 }),
+        }
+      );
 
       if (!orderRes.ok) {
         throw new Error("Failed to create order");
